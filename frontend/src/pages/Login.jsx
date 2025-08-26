@@ -1,37 +1,30 @@
-import React, { useState, useContext } from "react";
-import { login } from "../api/auth";
-import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
-export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState(null);
-  const { setUser } = useContext(AuthContext);
-  const navigate = useNavigate();
+export default function Login(){
+  const nav = useNavigate();
+  const [form, setForm] = useState({ email:'', password:'' });
+  const [err, setErr] = useState('');
 
-  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e) => {
+  async function submit(e) {
     e.preventDefault();
-    setError(null);
+    setErr('');
     try {
-      const data = await login(form);
-      setUser(data.user || null);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err?.response?.data?.error || "Login failed");
+      await api.post('/auth/login', form);
+      nav('/');
+    } catch (e) {
+      setErr(e?.response?.data?.error || 'Login failed');
     }
-  };
+  }
 
   return (
-    <div className="max-w-md mx-auto mt-8 bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">Login</h2>
-      {error && <div className="text-red-600 mb-3">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} className="w-full p-2 border rounded" required />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} className="w-full p-2 border rounded" required />
-        <button className="w-full py-2 bg-green-600 text-white rounded">Login</button>
-      </form>
-    </div>
+    <form onSubmit={submit} className="card">
+      <h2>Login</h2>
+      <input placeholder="Email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})}/>
+      <input type="password" placeholder="Password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})}/>
+      {err && <p className="error">{err}</p>}
+      <button>Login</button>
+    </form>
   );
 }

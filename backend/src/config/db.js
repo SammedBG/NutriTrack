@@ -1,15 +1,11 @@
 import mongoose from "mongoose";
 
-const connectDB = async () => {
+export async function connectDB(uri) {
   try {
-    const uri = process.env.MONGO_URI;
-    if (!uri) throw new Error("MONGO_URI not set in env");
-    await mongoose.connect(uri, { autoIndex: true });
+    await mongoose.connect(uri, { dbName: "nutrition" });
     console.log("MongoDB connected");
   } catch (err) {
-    console.error("MongoDB connection error:", err.message);
+    console.error("MongoDB connection error", err);
     process.exit(1);
   }
-};
-
-export default connectDB;
+}
