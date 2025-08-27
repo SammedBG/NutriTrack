@@ -1,27 +1,27 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const GoalsSchema = new mongoose.Schema({
-  goalType: { type: String, enum: ["lose", "maintain", "gain"], default: "maintain" },
-  calories: { type: Number, default: 2200 },
-  protein: { type: Number, default: 140 },
-  carbs: { type: Number, default: 220 },
-  fat: { type: Number, default: 70 }
-}, { _id: false });
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, unique: true, required: true },
+    password: { type: String, required: true },
+    goals: {
+      calories: { type: Number, default: 2000 },
+      protein: { type: Number, default: 100 },
+    },
+  },
+  { timestamps: true }
+);
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-  avatarUrl: String,
-  age: Number,
-  gender: { type: String, enum: ["male", "female", "other"], default: "other" },
-  height: Number,
-  weight: Number,
-  activityLevel: { type: String, enum: ["low","moderate","high"], default: "moderate" },
-  goals: { type: GoalsSchema, default: () => ({}) },
-  timezone: { type: String, default: "Asia/Kolkata" },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: Date
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
-export default mongoose.model("User", UserSchema);
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+export default mongoose.model("User", userSchema);

@@ -1,17 +1,17 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import User from "../models/User.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-export default function requireAuth(req, res, next) {
+const auth = async (req, res, next) => {
   try {
-    const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.userId = payload.id;
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select("-password");
     next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid token" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
-}
+};
+
+export default auth;
