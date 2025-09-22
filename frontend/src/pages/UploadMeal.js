@@ -88,11 +88,11 @@ export default function UploadMeal() {
             </p>
             
             <form onSubmit={submit}>
-              <input
+        <input
                 ref={fileInputRef}
-                accept="image/*"
-                capture="environment"
-                type="file"
+          accept="image/*"
+          capture="environment"
+          type="file"
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
               />
@@ -260,7 +260,7 @@ export default function UploadMeal() {
                   "🚀 Upload & Analyze"
                 )}
               </button>
-            </form>
+      </form>
           </div>
         )}
 

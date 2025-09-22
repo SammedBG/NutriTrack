@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 export const useNotifications = () => {
   const [permission, setPermission] = useState(Notification.permission);
-  const [isSupported, setIsSupported] = useState('Notification' in window);
+  const [isSupported] = useState('Notification' in window);
 
   useEffect(() => {
     if (isSupported) {

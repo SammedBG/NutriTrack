@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../api/api";
 import MealCard from "../components/MealCard";
 
@@ -16,7 +16,7 @@ export default function History() {
     pages: 0
   });
 
-  const fetchMeals = async (page = 1) => {
+  const fetchMeals = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -42,11 +42,11 @@ export default function History() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchMeals();
-  }, [filters]);
+  }, [fetchMeals]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

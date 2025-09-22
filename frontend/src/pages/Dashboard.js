@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import api from "../api/api";
 import MealCard from "../components/MealCard";
 import { AuthContext } from "../context/AuthContext";
@@ -14,14 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('week');
 
-  useEffect(() => {
-    fetchDashboardData();
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
-  }, [selectedPeriod]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [mealsRes, statsRes] = await Promise.all([
@@ -36,7 +29,14 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    fetchDashboardData();
+    // Set up real-time updates every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [selectedPeriod, fetchDashboardData]);
 
   const getProgressPercentage = (current, goal) => {
     if (!goal || goal === 0) return 0;
@@ -262,8 +262,8 @@ export default function Dashboard() {
                   }
                 }
               }}
-            />
-          </div>
+          />
+        </div>
         </div>
       </div>
 
@@ -292,7 +292,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 }

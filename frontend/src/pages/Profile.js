@@ -14,7 +14,7 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       setForm({
-        name: user.name || "",
+      name: user.name || "",
         profile: {
           age: user.profile?.age || "",
           gender: user.profile?.gender || "",
