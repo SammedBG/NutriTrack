@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import api from "../api/api";
 import { AuthContext } from "../context/AuthContext";
+import { exportMealsToCSV, exportUserStatsToJSON, exportNutritionReport } from "../utils/exportData";
 
 export default function Profile() {
   const { user, reloadUser } = useContext(AuthContext);

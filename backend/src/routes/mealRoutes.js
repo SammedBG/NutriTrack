@@ -9,6 +9,12 @@ import {
   updateMeal, 
   deleteMeal 
 } from "../controllers/mealController.js";
+import { 
+  validateMealCreation, 
+  validateMealId, 
+  validateMealQuery,
+  validateFileUpload 
+} from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -28,13 +34,13 @@ const upload = multer({
 });
 
 // Meal CRUD operations
-router.post("/", auth, addMeal);
-router.get("/", auth, getMeals);
-router.get("/stats", auth, getMealStats);
-router.put("/:id", auth, updateMeal);
-router.delete("/:id", auth, deleteMeal);
+router.post("/", auth, validateMealCreation, addMeal);
+router.get("/", auth, validateMealQuery, getMeals);
+router.get("/stats", auth, validateMealQuery, getMealStats);
+router.put("/:id", auth, validateMealId, validateMealCreation, updateMeal);
+router.delete("/:id", auth, validateMealId, deleteMeal);
 
 // Photo upload and analysis
-router.post("/upload", auth, upload.single("photo"), uploadMealPhoto);
+router.post("/upload", auth, upload.single("photo"), validateFileUpload, uploadMealPhoto);
 
 export default router;

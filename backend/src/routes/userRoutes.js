@@ -8,6 +8,11 @@ import {
   getUserStats, 
   deleteAccount 
 } from "../controllers/userController.js";
+import { 
+  validateProfileUpdate, 
+  validateGoals, 
+  validateFileUpload 
+} from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -28,11 +33,12 @@ const upload = multer({
 
 // User profile routes
 router.get("/me", auth, getMe);
-router.put("/me", auth, updateProfile);
+router.put("/me", auth, validateProfileUpdate, updateProfile);
+router.put("/goals", auth, validateGoals, updateProfile);
 router.get("/stats", auth, getUserStats);
 router.delete("/account", auth, deleteAccount);
 
 // Avatar upload
-router.post("/avatar", auth, upload.single("avatar"), uploadAvatar);
+router.post("/avatar", auth, upload.single("avatar"), validateFileUpload, uploadAvatar);
 
 export default router;
