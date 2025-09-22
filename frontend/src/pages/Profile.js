@@ -9,6 +9,7 @@ export default function Profile() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -48,6 +49,44 @@ export default function Profile() {
     }
   };
 
+  const handleExportData = async (type) => {
+    try {
+      setExportLoading(true);
+      
+      // Fetch user's meals
+      const mealsRes = await api.get("/meals?limit=1000");
+      const meals = mealsRes.data.meals || mealsRes.data;
+      
+      // Fetch user stats
+      const statsRes = await api.get("/user/stats");
+      const stats = statsRes.data;
+      
+      switch (type) {
+        case 'meals-csv':
+          exportMealsToCSV(meals);
+          setMsg("✅ Meals exported to CSV successfully!");
+          break;
+        case 'full-json':
+          exportUserStatsToJSON(user, stats, meals);
+          setMsg("✅ Complete data exported to JSON successfully!");
+          break;
+        case 'report':
+          exportNutritionReport(meals, user.goals);
+          setMsg("✅ Nutrition report generated successfully!");
+          break;
+        default:
+          throw new Error('Invalid export type');
+      }
+      
+      setTimeout(() => setMsg(""), 3000);
+    } catch (error) {
+      console.error("Export error:", error);
+      setMsg("❌ Export failed. Please try again.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   if (!form) {
     return (
       <div className="container">
@@ -70,7 +109,8 @@ export default function Profile() {
         <div className="flex" style={{ gap: '8px', marginBottom: '24px' }}>
           {[
             { id: "profile", label: "Profile", icon: "👤" },
-            { id: "goals", label: "Goals", icon: "🎯" }
+            { id: "goals", label: "Goals", icon: "🎯" },
+            { id: "export", label: "Export", icon: "📤" }
           ].map(tab => (
             <button
               key={tab.id}
@@ -312,6 +352,97 @@ export default function Profile() {
                   placeholder="8"
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Export Tab */}
+        {activeTab === "export" && (
+          <div className="card">
+            <h3 style={{ margin: '0 0 16px 0' }}>📤 Export Your Data</h3>
+            <p className="text-muted mb-4">
+              Download your nutrition data in various formats for backup or analysis
+            </p>
+            
+            <div className="grid grid-3 mb-4">
+              <div className="card" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 12px 0' }}>📊 Meals CSV</h4>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#64748b' }}>
+                  Export all your meals as a CSV file for spreadsheet analysis
+                </p>
+                <button
+                  onClick={() => handleExportData('meals-csv')}
+                  disabled={exportLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: exportLoading ? 'not-allowed' : 'pointer',
+                    opacity: exportLoading ? 0.6 : 1
+                  }}
+                >
+                  {exportLoading ? 'Exporting...' : 'Export CSV'}
+                </button>
+              </div>
+              
+              <div className="card" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 12px 0' }}>📋 Complete Data</h4>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#64748b' }}>
+                  Export all your data including profile, goals, and meals as JSON
+                </p>
+                <button
+                  onClick={() => handleExportData('full-json')}
+                  disabled={exportLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: exportLoading ? 'not-allowed' : 'pointer',
+                    opacity: exportLoading ? 0.6 : 1
+                  }}
+                >
+                  {exportLoading ? 'Exporting...' : 'Export JSON'}
+                </button>
+              </div>
+              
+              <div className="card" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 12px 0' }}>📈 Nutrition Report</h4>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#64748b' }}>
+                  Generate a comprehensive nutrition analysis report
+                </p>
+                <button
+                  onClick={() => handleExportData('report')}
+                  disabled={exportLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: exportLoading ? 'not-allowed' : 'pointer',
+                    opacity: exportLoading ? 0.6 : 1
+                  }}
+                >
+                  {exportLoading ? 'Generating...' : 'Generate Report'}
+                </button>
+              </div>
+            </div>
+            
+            <div className="card" style={{ background: '#fef3c7', border: '1px solid #fbbf24' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#92400e' }}>💡 Export Tips</h4>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#92400e', fontSize: '14px' }}>
+                <li>CSV files can be opened in Excel, Google Sheets, or any spreadsheet application</li>
+                <li>JSON files contain complete data and can be imported into other applications</li>
+                <li>Nutrition reports provide insights and analysis of your eating patterns</li>
+                <li>All exports include timestamps and are automatically named with the current date</li>
+              </ul>
             </div>
           </div>
         )}
