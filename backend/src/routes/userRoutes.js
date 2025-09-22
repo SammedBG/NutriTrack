@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import auth from "../middleware/auth.js";
 import { 
   getMe, 
@@ -13,23 +12,9 @@ import {
   validateGoals, 
   validateFileUpload 
 } from "../middleware/validation.js";
+import { s3AvatarUpload } from "../middleware/s3Upload.js";
 
 const router = express.Router();
-
-// Configure multer for avatar uploads
-const upload = multer({ 
-  dest: "uploads/",
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'), false);
-    }
-  }
-});
 
 // User profile routes
 router.get("/me", auth, getMe);
@@ -38,7 +23,7 @@ router.put("/goals", auth, validateGoals, updateProfile);
 router.get("/stats", auth, getUserStats);
 router.delete("/account", auth, deleteAccount);
 
-// Avatar upload
-router.post("/avatar", auth, upload.single("avatar"), validateFileUpload, uploadAvatar);
+// Avatar upload with S3
+router.post("/avatar", auth, ...s3AvatarUpload(), validateFileUpload, uploadAvatar);
 
 export default router;

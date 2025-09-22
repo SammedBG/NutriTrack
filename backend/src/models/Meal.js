@@ -12,16 +12,17 @@ const mealSchema = new mongoose.Schema(
     sugar: { type: Number, default: 0 },
     sodium: { type: Number, default: 0 },
     servingWeight: { type: Number, default: 0 },
-    servingUnit: { type: String, default: "serving" },
-    servingQty: { type: Number, default: 1 },
-    photoUrl: String,
-    mealType: { 
-      type: String, 
-      enum: ['breakfast', 'lunch', 'dinner', 'snack'], 
-      default: 'meal' 
-    },
-    confidence: { type: Number, default: 0 }, // AI confidence score
-    isVerified: { type: Boolean, default: false }, // User verified the analysis
+        servingUnit: { type: String, default: "serving" },
+        servingQty: { type: Number, default: 1 },
+        photoUrl: String,
+        s3Key: String, // S3 object key for file management
+        mealType: {
+          type: String,
+          enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+          default: 'meal'
+        },
+        confidence: { type: Number, default: 0 }, // AI confidence score
+        isVerified: { type: Boolean, default: false }, // User verified the analysis
   },
   { timestamps: true }
 );

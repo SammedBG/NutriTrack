@@ -1,6 +1,6 @@
-import cloudinary from "../config/cloudinary.js";
 import Meal from "../models/Meal.js";
 import { analyzeFood, analyzeFoodImage } from "../utils/nutritionix.js";
+import { deleteFromS3, extractS3Key } from "../config/aws.js";
 
 export const addMeal = async (req, res, next) => {
   try {
@@ -44,33 +44,26 @@ export const addMeal = async (req, res, next) => {
 
 export const uploadMealPhoto = async (req, res, next) => {
   try {
-    if (!req.file) {
+    if (!req.file && !req.s3File) {
       return res.status(400).json({ message: "No image file provided" });
     }
 
-    // Upload to Cloudinary with optimization
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "nutritrack-meals",
-      transformation: [
-        { width: 800, height: 600, crop: "limit", quality: "auto" }
-      ]
-    });
+    // Get the S3 file URL from middleware
+    const photoUrl = req.s3File.url;
+    const s3Key = req.s3File.key;
 
     // Analyze the food image
-    const nutrition = await analyzeFoodImage(result.secure_url);
-    
+    const nutrition = await analyzeFoodImage(photoUrl);
+
     // Create meal with confidence score
-    const meal = await Meal.create({ 
-      user: req.user._id, 
-      ...nutrition, 
-      photoUrl: result.secure_url,
+    const meal = await Meal.create({
+      user: req.user._id,
+      ...nutrition,
+      photoUrl: photoUrl,
+      s3Key: s3Key, // Store S3 key for future deletion
       confidence: 0.8, // This would come from the AI analysis
       mealType: req.body.mealType || "meal"
     });
-
-    // Clean up local file
-    const fs = require('fs');
-    fs.unlinkSync(req.file.path);
 
     res.json({
       ...meal.toObject(),
@@ -216,12 +209,24 @@ export const updateMeal = async (req, res, next) => {
 export const deleteMeal = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    const meal = await Meal.findOneAndDelete({ _id: id, user: req.user._id });
+
+    const meal = await Meal.findOne({ _id: id, user: req.user._id });
 
     if (!meal) {
       return res.status(404).json({ message: "Meal not found" });
     }
+
+    // Delete from S3 if meal has a photo
+    if (meal.s3Key) {
+      const deleteResult = await deleteFromS3(meal.s3Key);
+      if (!deleteResult.success) {
+        console.error('Failed to delete S3 file:', deleteResult.error);
+        // Continue with meal deletion even if S3 deletion fails
+      }
+    }
+
+    // Delete meal from database
+    await Meal.findByIdAndDelete(id);
 
     res.json({ message: "Meal deleted successfully" });
   } catch (err) {

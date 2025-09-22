@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
-    email: { type: String, unique: true, required: true, lowercase: true },
-    password: { type: String, required: true, minlength: 6 },
-    avatar: { type: String }, // URL to profile picture
+        name: { type: String, required: true, trim: true },
+        email: { type: String, unique: true, required: true, lowercase: true },
+        password: { type: String, required: true, minlength: 6 },
+        avatar: { type: String }, // URL to profile picture
+        avatarS3Key: { type: String }, // S3 key for avatar file management
     goals: {
       calories: { type: Number, default: 2000, min: 1000, max: 5000 },
       protein: { type: Number, default: 100, min: 50, max: 300 },

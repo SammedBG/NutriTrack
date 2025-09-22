@@ -42,7 +42,8 @@ A comprehensive MERN stack application that helps gym enthusiasts and health-con
 - **Node.js** with Express.js framework
 - **MongoDB** with Mongoose ODM
 - **JWT** for authentication
-- **Cloudinary** for image storage and optimization
+- **AWS S3** for scalable cloud storage
+- **AWS CloudFront** for global CDN (optional)
 - **Nutritionix API** for food analysis
 - **Google Vision API** for advanced image recognition
 - **Multer** for file uploads
@@ -61,7 +62,7 @@ A comprehensive MERN stack application that helps gym enthusiasts and health-con
 ### Prerequisites
 - Node.js 18+ and npm
 - MongoDB Atlas account or local MongoDB
-- Cloudinary account for image storage
+- AWS account with S3 access
 - Nutritionix API account
 - Google Cloud Vision API (optional, for enhanced analysis)
 

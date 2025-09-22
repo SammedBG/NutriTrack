@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import cloudinary from "../config/cloudinary.js";
+import { deleteFromS3, extractS3Key } from "../config/aws.js";
 
 export const getMe = async (req, res) => {
   try {
@@ -41,28 +41,31 @@ export const updateProfile = async (req, res, next) => {
 
 export const uploadAvatar = async (req, res, next) => {
   try {
-    if (!req.file) {
+    if (!req.file && !req.s3File) {
       return res.status(400).json({ message: "No image file provided" });
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "nutritrack-avatars",
-      transformation: [
-        { width: 200, height: 200, crop: "thumb", gravity: "face" }
-      ]
-    });
+    // Get the S3 file URL from middleware
+    const avatarUrl = req.s3File.url;
+    const s3Key = req.s3File.key;
+
+    // Delete old avatar from S3 if exists
+    if (req.user.avatar) {
+      const oldS3Key = extractS3Key(req.user.avatar);
+      if (oldS3Key) {
+        await deleteFromS3(oldS3Key);
+      }
+    }
 
     // Update user avatar
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { avatar: result.secure_url },
+      { 
+        avatar: avatarUrl,
+        avatarS3Key: s3Key // Store S3 key for future deletion
+      },
       { new: true }
     );
-
-    // Clean up local file
-    const fs = require('fs');
-    fs.unlinkSync(req.file.path);
 
     res.json({ avatar: user.avatar });
   } catch (err) {
@@ -124,15 +127,30 @@ export const getUserStats = async (req, res, next) => {
 export const deleteAccount = async (req, res, next) => {
   try {
     const { password } = req.body;
-    
+
     // Verify password before deletion
     const isMatch = await req.user.matchPassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // Delete user and all associated data
+    // Delete user's avatar from S3 if exists
+    if (req.user.avatarS3Key) {
+      await deleteFromS3(req.user.avatarS3Key);
+    }
+
+    // Get all user's meals to delete their photos from S3
     const Meal = require("../models/Meal.js").default;
+    const userMeals = await Meal.find({ user: req.user._id });
+    
+    // Delete all meal photos from S3
+    const s3DeletePromises = userMeals
+      .filter(meal => meal.s3Key)
+      .map(meal => deleteFromS3(meal.s3Key));
+    
+    await Promise.all(s3DeletePromises);
+
+    // Delete user and all associated data
     await Promise.all([
       User.findByIdAndDelete(req.user._id),
       Meal.deleteMany({ user: req.user._id })
