@@ -87,10 +87,11 @@ A comprehensive MERN stack application that helps gym enthusiasts and health-con
    CORS_ORIGIN=http://localhost:3000
    PORT=5000
    
-   # Cloudinary Configuration
-   CLOUDINARY_CLOUD_NAME=your-cloud-name
-   CLOUDINARY_API_KEY=your-api-key
-   CLOUDINARY_API_SECRET=your-api-secret
+   # AWS S3 Configuration
+   AWS_REGION=us-east-1
+   AWS_ACCESS_KEY_ID=your-aws-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+   AWS_S3_BUCKET_NAME=your-s3-bucket-name
    
    # Nutritionix API
    NUTRITIONIX_APP_ID=your-app-id
@@ -100,11 +101,24 @@ A comprehensive MERN stack application that helps gym enthusiasts and health-con
    GOOGLE_APPLICATION_CREDENTIALS=path-to-service-account.json
    ```
 
-4. **Start the server**
+4. **Set up AWS S3**
+   - Create an S3 bucket in your AWS account
+   - Configure bucket permissions for public read access
+   - Create IAM user with S3 permissions
+   - See [AWS_SETUP_GUIDE.md](./AWS_SETUP_GUIDE.md) for detailed instructions
+
+5. **Start the server**
    ```bash
    npm run dev
    ```
    Server will run on `http://localhost:5000`
+
+6. **Migration from Cloudinary (if applicable)**
+   If you're migrating from Cloudinary to AWS S3:
+   ```bash
+   npm run migrate-to-s3
+   ```
+   This will migrate all existing images to your S3 bucket.
 
 ### Frontend Setup
 

@@ -11,6 +11,7 @@ import userRoutes from "../src/routes/userRoutes.js";
 import mealRoutes from "../src/routes/mealRoutes.js";
 import errorHandler from "../src/middleware/errorHandler.js";
 import { generalLimiter, authLimiter, uploadLimiter, profileLimiter } from "../src/middleware/rateLimiter.js";
+import { devLimiter, devUploadLimiter, devAuthLimiter } from "../src/middleware/devRateLimiter.js";
 
 dotenv.config();
 const app = express();
@@ -29,8 +30,9 @@ app.use(helmet({
   }
 }));
 
-// Rate Limiting
-app.use(generalLimiter);
+// Rate Limiting (development-friendly)
+const isDevelopment = process.env.NODE_ENV === 'development';
+app.use(isDevelopment ? devLimiter : generalLimiter);
 
 // Logging
 app.use(morgan("dev"));
@@ -60,10 +62,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes with specific rate limiting
-app.use("/api/auth", authLimiter, authRoutes);
+// Development-only rate limit reset endpoint
+if (isDevelopment) {
+  app.post('/dev/reset-rate-limit', (req, res) => {
+    // This is a placeholder - in a real implementation, you'd need to clear the rate limit store
+    res.json({ 
+      message: 'Rate limit reset requested. Note: This requires restarting the server to fully reset.',
+      timestamp: new Date().toISOString()
+    });
+  });
+}
+
+// Routes with specific rate limiting (development-friendly)
+app.use("/api/auth", isDevelopment ? devAuthLimiter : authLimiter, authRoutes);
 app.use("/api/user", profileLimiter, userRoutes);
-app.use("/api/meals", uploadLimiter, mealRoutes);
+app.use("/api/meals", isDevelopment ? devUploadLimiter : uploadLimiter, mealRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

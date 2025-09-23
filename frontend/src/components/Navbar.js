@@ -53,8 +53,8 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="flex" style={{ gap: '24px', alignItems: 'center' }}>
-            {user ? (
-              <>
+        {user ? (
+          <>
                 {/* Desktop Menu */}
                 <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                   {navLinks.map(link => (
@@ -168,8 +168,8 @@ export default function Navbar() {
                 >
                   ☰
                 </button>
-              </>
-            ) : (
+          </>
+        ) : (
               <div className="flex" style={{ gap: '12px' }}>
                 <Link
                   to="/login"
@@ -239,7 +239,7 @@ export default function Navbar() {
         )}
       </div>
 
-      <style jsx>{`
+        <style>{`
         @media (max-width: 768px) {
           .mobile-menu-btn {
             display: block !important;

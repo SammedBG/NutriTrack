@@ -55,7 +55,17 @@ export default function UploadMeal() {
       // Auto-navigate after 3 seconds
       setTimeout(() => nav("/"), 3000);
     } catch (err) {
-      setMessage(err?.response?.data?.message || "Upload failed. Please try again.");
+      console.error("Upload error:", err);
+      
+      if (err.response?.status === 429) {
+        setMessage("⚠️ Too many upload attempts. Please wait a moment and try again.");
+      } else if (err.response?.data?.message) {
+        setMessage(`❌ ${err.response.data.message}`);
+      } else if (err.message) {
+        setMessage(`❌ Upload failed: ${err.message}`);
+      } else {
+        setMessage("❌ Upload failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

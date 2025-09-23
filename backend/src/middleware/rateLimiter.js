@@ -3,13 +3,14 @@ import rateLimit from 'express-rate-limit';
 // General API rate limiter
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More generous in development
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful requests
 });
 
 // Strict rate limiter for authentication endpoints
@@ -27,14 +28,15 @@ export const authLimiter = rateLimit({
 
 // Upload rate limiter
 export const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // limit each IP to 20 uploads per hour
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP to 50 uploads per 15 minutes (more generous for development)
   message: {
     error: 'Too many uploads, please try again later.',
-    retryAfter: '1 hour'
+    retryAfter: '15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful requests
 });
 
 // Profile update rate limiter
