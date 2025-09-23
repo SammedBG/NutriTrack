@@ -18,7 +18,7 @@ const mealSchema = new mongoose.Schema(
         s3Key: String, // S3 object key for file management
         mealType: {
           type: String,
-          enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+          enum: ['breakfast', 'lunch', 'dinner', 'snack', 'meal'],
           default: 'meal'
         },
         confidence: { type: Number, default: 0 }, // AI confidence score

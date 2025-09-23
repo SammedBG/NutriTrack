@@ -52,8 +52,31 @@ export const uploadMealPhoto = async (req, res, next) => {
     const photoUrl = req.s3File.url;
     const s3Key = req.s3File.key;
 
-    // Analyze the food image
-    const nutrition = await analyzeFoodImage(photoUrl);
+    // Analyze the food image with fallback
+    let nutrition;
+    let confidence = 0.5; // Default confidence
+    
+    try {
+      nutrition = await analyzeFoodImage(photoUrl);
+      confidence = 0.8; // Higher confidence if analysis succeeds
+    } catch (analysisError) {
+      console.error("Food analysis failed, using fallback:", analysisError.message);
+      // Fallback to basic food item
+      nutrition = {
+        name: "Food Item",
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        fiber: 0,
+        sugar: 0,
+        sodium: 0,
+        servingWeight: 0,
+        servingUnit: "serving",
+        servingQty: 1,
+      };
+      confidence = 0.3; // Lower confidence for fallback
+    }
 
     // Create meal with confidence score
     const meal = await Meal.create({
@@ -61,7 +84,7 @@ export const uploadMealPhoto = async (req, res, next) => {
       ...nutrition,
       photoUrl: photoUrl,
       s3Key: s3Key, // Store S3 key for future deletion
-      confidence: 0.8, // This would come from the AI analysis
+      confidence: confidence,
       mealType: req.body.mealType || "meal"
     });
 
@@ -69,7 +92,9 @@ export const uploadMealPhoto = async (req, res, next) => {
       ...meal.toObject(),
       analysis: {
         confidence: meal.confidence,
-        message: "Food analyzed successfully! Please verify the details below."
+        message: confidence > 0.7 
+          ? "Food analyzed successfully! Please verify the details below."
+          : "Image uploaded successfully! Please manually enter the food details."
       }
     });
   } catch (err) {

@@ -13,7 +13,16 @@ import errorHandler from "../src/middleware/errorHandler.js";
 import { generalLimiter, authLimiter, uploadLimiter, profileLimiter } from "../src/middleware/rateLimiter.js";
 import { devLimiter, devUploadLimiter, devAuthLimiter } from "../src/middleware/devRateLimiter.js";
 
-dotenv.config();
+// Load environment variables from .env file
+dotenv.config({ path: './.env' });
+
+// Debug: Check if environment variables are loaded
+console.log('🔍 Environment Variables Check:');
+console.log('AWS_S3_BUCKET_NAME:', process.env.AWS_S3_BUCKET_NAME || 'NOT SET');
+console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? '***SET***' : 'NOT SET');
+console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? '***SET***' : 'NOT SET');
+console.log('AWS_REGION:', process.env.AWS_REGION || 'NOT SET');
+
 const app = express();
 
 // Security Middleware

@@ -2,29 +2,47 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } fro
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// Initialize S3 client function (called when needed)
+const getS3Client = () => {
+  return new S3Client({
+    region: process.env.AWS_REGION || 'us-east-1',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+};
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+// Get bucket name function (called when needed)
+const getBucketName = () => {
+  return process.env.AWS_S3_BUCKET_NAME;
+};
 
 // Upload file to S3
 export const uploadToS3 = async (file, folder = 'uploads') => {
   try {
+    const bucketName = getBucketName();
+    const s3Client = getS3Client();
+    
+    // Validate required environment variables
+    if (!bucketName) {
+      throw new Error('AWS_S3_BUCKET_NAME environment variable is not set');
+    }
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      throw new Error('AWS_ACCESS_KEY_ID environment variable is not set');
+    }
+    if (!process.env.AWS_SECRET_ACCESS_KEY) {
+      throw new Error('AWS_SECRET_ACCESS_KEY environment variable is not set');
+    }
     const fileExtension = file.originalname.split('.').pop();
     const fileName = `${folder}/${uuidv4()}.${fileExtension}`;
     
     const uploadParams = {
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName,
       Key: fileName,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: 'public-read', // Make files publicly accessible
+      // ACL removed - bucket has ACLs disabled
       Metadata: {
         originalName: file.originalname,
         uploadedAt: new Date().toISOString(),
@@ -35,7 +53,7 @@ export const uploadToS3 = async (file, folder = 'uploads') => {
     await s3Client.send(command);
 
     // Return the public URL
-    const fileUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${fileName}`;
+    const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${fileName}`;
     
     return {
       success: true,
@@ -55,8 +73,11 @@ export const uploadToS3 = async (file, folder = 'uploads') => {
 // Delete file from S3
 export const deleteFromS3 = async (fileKey) => {
   try {
+    const bucketName = getBucketName();
+    const s3Client = getS3Client();
+    
     const deleteParams = {
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName,
       Key: fileKey,
     };
 
@@ -79,13 +100,15 @@ export const deleteFromS3 = async (fileKey) => {
 // Generate presigned URL for secure uploads (optional)
 export const generatePresignedUrl = async (fileName, contentType, folder = 'uploads') => {
   try {
+    const bucketName = getBucketName();
+    const s3Client = getS3Client();
     const key = `${folder}/${uuidv4()}-${fileName}`;
     
     const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
       ContentType: contentType,
-      ACL: 'public-read',
+      // ACL removed - bucket has ACLs disabled
     });
 
     const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
@@ -94,7 +117,7 @@ export const generatePresignedUrl = async (fileName, contentType, folder = 'uplo
       success: true,
       presignedUrl,
       key,
-      publicUrl: `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`,
+      publicUrl: `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`,
     };
   } catch (error) {
     console.error('Presigned URL Error:', error);
@@ -108,8 +131,10 @@ export const generatePresignedUrl = async (fileName, contentType, folder = 'uplo
 // Get file from S3 (for private files)
 export const getFromS3 = async (fileKey) => {
   try {
+    const bucketName = getBucketName();
+    const s3Client = getS3Client();
     const command = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName,
       Key: fileKey,
     });
 
@@ -140,4 +165,4 @@ export const extractS3Key = (url) => {
   return urlParts.slice(bucketIndex + 1).join('/');
 };
 
-export default s3Client;
+export default getS3Client;

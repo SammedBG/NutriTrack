@@ -8,8 +8,8 @@ export const analyzeFood = async (query) => {
       { query }, // text input, like "1 apple" or "2 eggs"
       {
         headers: {
-          "x-app-id": process.env.NUTRITIONIX_APP_ID,
-          "x-app-key": process.env.NUTRITIONIX_API_KEY,
+          "x-app-id": process.env.NUTRITIONIX_APP_ID||'369c1880',
+          "x-app-key": process.env.NUTRITIONIX_API_KEY||'fcbeba3b30c9b5fdd38084d859792a49',
           "Content-Type": "application/json",
         },
       }
@@ -57,8 +57,8 @@ export const analyzeFoodImage = async (imageUrl) => {
   try {
     // This would integrate with Google Vision API for food recognition
     // For now, we'll use a placeholder that could be enhanced
-    const vision = require('@google-cloud/vision');
-    const client = new vision.ImageAnnotatorClient();
+    const { ImageAnnotatorClient } = await import('@google-cloud/vision');
+    const client = new ImageAnnotatorClient();
     
     const [result] = await client.labelDetection(imageUrl);
     const labels = result.labelAnnotations;
