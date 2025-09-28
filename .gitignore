@@ -29,3 +29,4 @@ yarn-debug.log*
 yarn-error.log*
 backend/.env copy
 backend/nutritrack-473516-a78008a4c0f0.json
+.env copy

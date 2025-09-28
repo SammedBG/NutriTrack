@@ -3,25 +3,25 @@ import axios from "axios";
 
 export const analyzeFood = async (query) => {
   try {
-    const res = await axios.post(
-      "https://trackapi.nutritionix.com/v2/natural/nutrients",
-      { query }, // text input, like "1 apple" or "2 eggs"
-      {
-        headers: {
+  const res = await axios.post(
+    "https://trackapi.nutritionix.com/v2/natural/nutrients",
+    { query }, // text input, like "1 apple" or "2 eggs"
+    {
+      headers: {
           "x-app-id": process.env.NUTRITIONIX_APP_ID||'369c1880',
           "x-app-key": process.env.NUTRITIONIX_API_KEY||'fcbeba3b30c9b5fdd38084d859792a49',
-          "Content-Type": "application/json",
-        },
-      }
-    );
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
     if (!res.data.foods || res.data.foods.length === 0) {
       throw new Error("No food items found");
     }
 
-    const food = res.data.foods[0];
-    return {
-      name: food.food_name,
+  const food = res.data.foods[0];
+  return {
+    name: food.food_name,
       calories: Math.round(food.nf_calories || 0),
       protein: Math.round(food.nf_protein || 0),
       carbs: Math.round(food.nf_total_carbohydrate || 0),
@@ -52,35 +52,50 @@ export const analyzeFood = async (query) => {
   }
 };
 
-// Enhanced food recognition using Google Vision API
+// Free food recognition using Spoonacular API and fallback database
 export const analyzeFoodImage = async (imageUrl) => {
   try {
-    // This would integrate with Google Vision API for food recognition
-    // For now, we'll use a placeholder that could be enhanced
-    const { ImageAnnotatorClient } = await import('@google-cloud/vision');
-    const client = new ImageAnnotatorClient();
+    console.log("🔍 Analyzing food image with free detection system...");
     
-    const [result] = await client.labelDetection(imageUrl);
-    const labels = result.labelAnnotations;
+    // Import our free food detection system
+    const { analyzeFoodImageFree } = await import('./freeFoodDetection.js');
     
-    // Look for food-related labels
-    const foodLabels = labels
-      .filter(label => label.description.toLowerCase().includes('food') || 
-                     label.description.toLowerCase().includes('meal') ||
-                     label.description.toLowerCase().includes('dish'))
-      .map(label => label.description);
+    // Use the free detection system
+    const result = await analyzeFoodImageFree(imageUrl);
     
-    if (foodLabels.length > 0) {
-      // Use the most confident food label for analysis
-      const foodQuery = foodLabels[0];
-      return await analyzeFood(foodQuery);
+    if (result && result.name !== "Unknown Food Item") {
+      console.log("✅ Free food detection successful:", result.name);
+      return result;
     }
     
-    // Fallback to generic food analysis
+    // If free detection fails, try with Nutritionix using a generic query
+    console.log("🔄 Fallback to Nutritionix with generic query");
     return await analyzeFood("food item");
+    
   } catch (error) {
-    console.error("Vision API Error:", error.message);
-    // Fallback to basic analysis
-    return await analyzeFood("food item");
+    console.error("❌ Free food detection error:", error.message);
+    
+    // Ultimate fallback to Nutritionix
+    try {
+      return await analyzeFood("food item");
+    } catch (nutritionixError) {
+      console.error("❌ Nutritionix fallback also failed:", nutritionixError.message);
+      
+      // Return a basic food item as last resort
+      return {
+        name: "Food Item",
+        calories: 200,
+        protein: 10,
+        carbs: 25,
+        fat: 8,
+        fiber: 2,
+        sugar: 5,
+        sodium: 300,
+        servingWeight: 100,
+        servingUnit: "g",
+        servingQty: 1,
+        source: "Emergency Fallback"
+      };
+    }
   }
 };
