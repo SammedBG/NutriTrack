@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
+import FoodDetection from "../components/FoodDetection";
 
 export default function UploadMeal() {
   const nav = useNavigate();
@@ -11,6 +12,7 @@ export default function UploadMeal() {
   const [message, setMessage] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
   const [mealType, setMealType] = useState("meal");
+  const [showFoodDetection, setShowFoodDetection] = useState(false);
 
   const handleFileSelect = (e) => {
     const selectedFile = e.target.files?.[0];
@@ -81,6 +83,12 @@ export default function UploadMeal() {
     }
   };
 
+  const handleFoodDetected = (foodName) => {
+    console.log("🍎 Food detected:", foodName);
+    setShowFoodDetection(false);
+    setMessage(`🎯 Detected: ${foodName}. Please take a photo to analyze nutrition.`);
+  };
+
   return (
     <div className="container">
       <div className="card">
@@ -127,6 +135,27 @@ export default function UploadMeal() {
                   }}
                 >
                   📷 Take Photo
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowFoodDetection(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '16px 24px',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  🤖 AI Detection
                 </button>
                 
                 <select
@@ -304,6 +333,14 @@ export default function UploadMeal() {
           </ul>
         </div>
       </div>
+
+      {/* Food Detection Modal */}
+      {showFoodDetection && (
+        <FoodDetection
+          onFoodDetected={handleFoodDetected}
+          onClose={() => setShowFoodDetection(false)}
+        />
+      )}
     </div>
   );
 }
